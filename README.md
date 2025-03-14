@@ -451,5 +451,423 @@ pd.date_range(start="2023-01-01", end="2023-12-31")
 # DatetimeIndex(['2023-01-01', '2023-01-02', ..., '2023-12-31'],
                 dtype='datetime64[ns]', length=365, freq='D')
 ```
+
+## Timelike data handling
+
+### Pandas Date & Timestamp Reference Guide
+
+### Basic Concepts
+
+### Main Date/Time Types
+- `Timestamp`: Single point in time (equivalent to Python's `datetime`)
+- `DatetimeIndex`: Index of Timestamp objects
+- `Period`: Time span representation
+- `PeriodIndex`: Index of Period objects
+- `Timedelta`: Duration (equivalent to Python's `timedelta`)
+- `TimedeltaIndex`: Index of Timedelta objects
+
+### Key Datetime Components
+```python
+import pandas as pd
+from datetime import datetime, timedelta
+```
+
+### Creating Date/Time Objects
+
+### From Strings
+```python
+# Single timestamp
+ts = pd.Timestamp('2023-09-01 14:30:00')
+
+# From various string formats
+pd.to_datetime('2023-09-01')
+pd.to_datetime('Sep 1, 2023')
+pd.to_datetime('01/09/2023', format='%d/%m/%Y')  # Day first format
+```
+
+### From Components
+```python
+# Create from year, month, day components
+pd.Timestamp(year=2023, month=9, day=1, hour=14, minute=30)
+
+# Current time
+pd.Timestamp.now()
+
+# From Python datetime
+pd.Timestamp(datetime(2023, 9, 1, 14, 30))
+```
+
+### Creating DatetimeIndex
+```python
+# From a list of datetime strings
+dates = pd.DatetimeIndex(['2023-09-01', '2023-09-02', '2023-09-03'])
+
+# Generate a range of dates
+date_range = pd.date_range(start='2023-09-01', end='2023-09-30')
+date_range = pd.date_range(start='2023-09-01', periods=30, freq='D')
+```
+
+### Date Ranges with Different Frequencies
+```python
+# Daily frequency (default)
+pd.date_range('2023-09-01', periods=10, freq='D')
+
+# Business days (Monday to Friday)
+pd.date_range('2023-09-01', periods=10, freq='B')
+
+# Weekly, Month-end, Quarter-end, Year-end
+pd.date_range('2023-09-01', periods=10, freq='W')    # Weekly
+pd.date_range('2023-09-01', periods=10, freq='M')    # Month end
+pd.date_range('2023-09-01', periods=4, freq='Q')     # Quarter end
+pd.date_range('2023-09-01', periods=3, freq='A')     # Year end
+
+# Hours, Minutes, Seconds
+pd.date_range('2023-09-01', periods=24, freq='H')    # Hourly
+pd.date_range('2023-09-01', periods=60, freq='T')    # Minute
+pd.date_range('2023-09-01', periods=60, freq='S')    # Second
+```
+
+### Parsing Date/Time Data
+
+### String to Datetime Conversion
+```python
+# Basic conversion
+pd.to_datetime('2023-09-01')
+
+# A series of dates
+pd.to_datetime(['2023-09-01', '2023-09-02', '2023-09-03'])
+
+# Convert a dataframe column
+df['date_column'] = pd.to_datetime(df['date_column'])
+```
+
+### Handling Custom Formats
+```python
+# Specify format with strftime codes
+pd.to_datetime('01/09/2023', format='%d/%m/%Y')
+pd.to_datetime('September 1, 2023', format='%B %d, %Y')
+
+# Common format codes:
+# %Y - 4-digit year (2023)
+# %y - 2-digit year (23)
+# %m - month as zero-padded number (01-12)
+# %d - day as zero-padded number (01-31)
+# %H - hour (00-23)
+# %M - minute (00-59)
+# %S - second (00-59)
+# %B - full month name (January)
+# %b - abbreviated month name (Jan)
+```
+
+### Handling Errors and Missing Values
+```python
+# Handle errors by coercing to NaT (Not a Time)
+pd.to_datetime(['2023-09-01', 'invalid date'], errors='coerce')
+
+# Set NaT for missing values
+pd.to_datetime(['2023-09-01', None, pd.NA])
+```
+
+### Bulk Conversion Performance
+```python
+# Using format parameter for faster parsing when format is known
+pd.to_datetime(large_series, format='%Y-%m-%d', cache=True)
+
+# Infer format automatically (slower but convenient)
+pd.to_datetime(large_series, infer_datetime_format=True)
+```
+
+### Date Attributes and Components
+
+### Extracting Components
+```python
+dates = pd.date_range('2023-09-01', periods=10, freq='D')
+df = pd.DataFrame({'date': dates})
+
+# Basic components
+df['year'] = df['date'].dt.year           # 2023
+df['month'] = df['date'].dt.month         # 9
+df['day'] = df['date'].dt.day             # 1-10
+df['dayofweek'] = df['date'].dt.dayofweek # 0-6 (Monday=0)
+df['dayofyear'] = df['date'].dt.dayofyear # 1-365
+df['quarter'] = df['date'].dt.quarter     # 1-4
+df['weekofyear'] = df['date'].dt.isocalendar().week  # ISO week number
+
+# Time components
+df['hour'] = df['date'].dt.hour
+df['minute'] = df['date'].dt.minute
+df['second'] = df['date'].dt.second
+```
+
+### Day Name and Month Name
+```python
+df['day_name'] = df['date'].dt.day_name()      # Monday, Tuesday, etc.
+df['month_name'] = df['date'].dt.month_name()  # September
+```
+
+### Boolean Properties
+```python
+df['is_leap_year'] = df['date'].dt.is_leap_year
+df['is_month_end'] = df['date'].dt.is_month_end
+df['is_quarter_end'] = df['date'].dt.is_quarter_end
+df['is_year_end'] = df['date'].dt.is_year_end
+df['is_weekend'] = df['date'].dt.dayofweek >= 5  # Saturday=5, Sunday=6
+```
+
+### Date Math and Manipulations
+
+### Basic Operations
+```python
+# Add days
+df['next_day'] = df['date'] + pd.Timedelta(days=1)
+df['prev_day'] = df['date'] - pd.Timedelta(days=1)
+
+# Add various time units
+df['date'] + pd.Timedelta(weeks=1)
+df['date'] + pd.Timedelta(hours=3)
+df['date'] + pd.Timedelta(minutes=30)
+df['date'] + pd.Timedelta('3 days 2 hours')
+```
+
+### Date Offsets
+```python
+from pandas.tseries.offsets import Day, BusinessDay, MonthEnd, QuarterEnd, YearEnd
+
+# Add specific offsets
+df['date'] + Day(5)
+df['date'] + BusinessDay(5)  # Skip weekends
+df['date'] + MonthEnd(1)     # Next month end
+df['date'] + QuarterEnd(1)   # Next quarter end
+df['date'] + YearEnd(1)      # Next year end
+```
+
+### Date Differences
+```python
+# Difference between two dates
+delta = df['date_column2'] - df['date_column1']  # Returns timedelta
+
+# Convert timedelta to numeric
+df['days_diff'] = (df['date_column2'] - df['date_column1']).dt.days
+df['hours_diff'] = (df['date_column2'] - df['date_column1']).dt.total_seconds() / 3600
+```
+
+### Time Zones
+
+### Setting and Converting Time Zones
+```python
+# Create datetime with timezone
+ts_utc = pd.Timestamp('2023-09-01 14:30:00', tz='UTC')
+
+# Convert to another timezone
+ts_ny = ts_utc.tz_convert('America/New_York')
+
+# Localize naive datetime to timezone
+ts_naive = pd.Timestamp('2023-09-01 14:30:00')
+ts_local = ts_naive.tz_localize('Europe/London')
+
+# Convert timezone of a Series
+df['date_utc'] = df['date'].dt.tz_localize('UTC')
+df['date_local'] = df['date_utc'].dt.tz_convert('US/Pacific')
+```
+
+### Working with Different Time Zones
+```python
+# Common time zones
+time_zones = ['UTC', 'US/Eastern', 'US/Pacific', 'Europe/London', 'Asia/Tokyo']
+
+# Get list of all time zones
+import pytz
+all_timezones = pytz.all_timezones
+
+# Remove timezone information
+df['date_naive'] = df['date_with_tz'].dt.tz_localize(None)
+```
+
+### Resampling Time Series Data
+
+### Frequency Upsampling
+```python
+# Starting with daily data
+daily_data = pd.DataFrame({
+    'date': pd.date_range('2023-09-01', periods=10, freq='D'),
+    'value': range(10)
+}).set_index('date')
+
+# Upsample to hourly (creates NaN values)
+hourly_data = daily_data.resample('H').asfreq()
+
+# Fill with various methods
+hourly_ffill = daily_data.resample('H').ffill()   # Forward fill
+hourly_bfill = daily_data.resample('H').bfill()   # Backward fill
+hourly_interp = daily_data.resample('H').interpolate()  # Linear interpolation
+```
+
+### Frequency Downsampling with Aggregation
+```python
+# Starting with hourly data
+hourly_data = pd.DataFrame({
+    'date': pd.date_range('2023-09-01', periods=240, freq='H'),
+    'value': range(240)
+}).set_index('date')
+
+# Downsample with common aggregations
+daily_mean = hourly_data.resample('D').mean()
+daily_sum = hourly_data.resample('D').sum()
+daily_max = hourly_data.resample('D').max()
+daily_min = hourly_data.resample('D').min()
+daily_first = hourly_data.resample('D').first()
+daily_last = hourly_data.resample('D').last()
+```
+
+### Common Resampling Frequencies
+```python
+# Minute, Hour, Day
+df.resample('T').mean()  # Minute
+df.resample('H').mean()  # Hour
+df.resample('D').mean()  # Day
+
+# Week, Month, Quarter, Year
+df.resample('W').mean()  # Week (ends on Sunday)
+df.resample('W-MON').mean()  # Week ending Monday
+df.resample('M').mean()  # Month end
+df.resample('Q').mean()  # Quarter end
+df.resample('A').mean()  # Year end
+
+# Business day
+df.resample('B').mean()  # Business day
+```
+
+### Time Series Analysis
+
+### Rolling Window Operations
+```python
+# Set datetime as index for time series operations
+df = df.set_index('date')
+
+# Rolling windows
+df.rolling(window='7D').mean()    # 7-day rolling average
+df.rolling(window='30D').sum()    # 30-day rolling sum
+df.rolling(window='90D').std()    # 90-day rolling standard deviation
+
+# With minimum periods
+df.rolling(window='7D', min_periods=3).mean()
+```
+
+### Expanding Window
+```python
+# Expanding (cumulative) window
+df.expanding().mean()   # Cumulative average
+df.expanding().sum()    # Cumulative sum
+```
+
+### Shifting and Lagging
+```python
+# Shift (lag) values by time periods
+df['prev_day'] = df['value'].shift(1)      # Previous day
+df['next_day'] = df['value'].shift(-1)     # Next day
+df['prev_week'] = df['value'].shift(7)     # Previous week
+
+# Shift by actual time frequency
+df['prev_month'] = df['value'].shift(freq='M')  # Previous month end
+```
+
+### Period-over-Period Comparisons
+```python
+# Calculate changes
+df['daily_change'] = df['value'].diff(1)             # Day-over-day change
+df['weekly_change'] = df['value'].diff(7)            # Week-over-week change
+df['monthly_change'] = df['value'].diff(30)          # Approx. month-over-month
+df['yearly_change'] = df['value'].diff(365)          # Year-over-year change
+
+# Calculate percentage changes
+df['daily_pct_change'] = df['value'].pct_change(1)   # Day-over-day % change
+df['weekly_pct_change'] = df['value'].pct_change(7)  # Week-over-week % change
+```
+
+### Advanced Techniques
+
+### Working with Holidays
+```python
+from pandas.tseries.holiday import USFederalHolidayCalendar
+
+# Create a calendar
+cal = USFederalHolidayCalendar()
+
+# Get holidays for a date range
+holidays = cal.holidays(start='2023-01-01', end='2023-12-31')
+
+# Create business day calendar excluding holidays
+from pandas.tseries.offsets import CustomBusinessDay
+business_day = CustomBusinessDay(calendar=cal)
+
+# Generate business days
+pd.date_range(start='2023-09-01', end='2023-09-30', freq=business_day)
+
+# Check if date is a holiday
+df['is_holiday'] = df.index.isin(holidays)
+```
+
+### Custom Date Offsets
+```python
+# Create custom business day
+weekmask = 'Mon Tue Wed Thu'  # 4-day work week
+holidays = ['2023-09-04', '2023-11-23']  # Labor Day and Thanksgiving
+custom_bd = pd.offsets.CustomBusinessDay(holidays=holidays, weekmask=weekmask)
+
+# Generate custom business days
+pd.date_range(start='2023-09-01', end='2023-09-15', freq=custom_bd)
+```
+
+### Working with Fiscal Years
+```python
+# Create fiscal year with different start
+from pandas.tseries.offsets import FY5253Quarter
+
+# FY starts in July
+fiscal_quarter = FY5253Quarter(startingMonth=7, qtr_with_extra_week=1, weekday=6)
+
+# Generate fiscal quarters
+pd.date_range('2023-01-01', periods=8, freq=fiscal_quarter)
+```
+
+### Irregular Time Series
+```python
+# Handling irregular time series
+irregular_dates = pd.DatetimeIndex(['2023-09-01 10:00', '2023-09-01 10:05', 
+                                    '2023-09-01 10:12', '2023-09-01 10:18'])
+irregular_values = [10, 12, 15, 11]
+
+# Create irregular series
+irr_series = pd.Series(irregular_values, index=irregular_dates)
+
+# Resample to regular 5-min intervals
+regular_series = irr_series.resample('5T').mean()
+
+# Interpolate missing values
+filled_series = regular_series.interpolate(method='time')
+```
+
+### Best Practices
+
+### General Best Practices
+1. **Set datetime as index** when working with time series data for easier operations
+   ```python
+   df = df.set_index('date')
+   ```
+
+2. **Use timezone-aware datetimes** consistently throughout your analysis
+   ```python
+   df['date'] = pd.to_datetime(df['date']).dt.tz_localize('UTC')
+   ```
+
+3. **Specify formats explicitly** when parsing dates for better performance
+   ```python
+   pd.to_datetime(df['date'], format='%Y-%m-%d')
+   ```
+
+4. **Use NaT (Not a Time)** for missing dates rather than None or
+
+
+
 ## References
 The pandas documentation can be found on: [https://pandas.pydata.org/docs/index.html](https://pandas.pydata.org/docs/index.html)
