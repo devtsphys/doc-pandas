@@ -1,5 +1,11 @@
 # Code Reference for Pandas
 
+- [Installation](#install-packages)
+- [Series](#series)
+- [Indexes](#indexes)
+- [DataFrames](#data-frame)
+- [Timelike data handling](#date-and-timestamp-data)
+
 ## Install Packages
 ```Bash
 python -m pip install pandas
@@ -231,29 +237,69 @@ resulting in
 1	B	-2	9.24	2.0	-4.0
 2	C	3	-0.12	2.0	6.0
 ```
-We can use the assign and apply methods to create new columns by applying a function to a given column
+We can use the assign and apply and assign methods 
+```python
+# Apply a function to all (or specific) columns
+df = df.apply(func=np.sqrt)
+
+# Create columns using assign() (returns a new DataFrame)
+df = df.assign(new_column=value)
+```
+to create new columns by applying a function to a given column
 ```Python
 # Loc
 df.loc[:, "squared_value"] = df["value"].apply(lambda x: x*x)			# Single column
 df.loc[:, "factor_abs"] = df.apply(lambda x: x["factor"]*x["abs"], axis=1)	# Multiple columns
 
+df_lambda["new_column"] = df_lambda["existing_column"].apply(lambda x: my_function(x) if isinstance(x, str) else "")
+
+# Apply a function to each element
+df['title_case'] = df['name'].apply(lambda x: x.title())
+
+# Custom functions
+def calculate_bmi(row):
+    return row['weight'] / (row['height'] ** 2)
+
+df['bmi'] = df.apply(calculate_bmi, axis=1)
+
 # Assign
 df_assigned_one = df.assign(new_variable="empty")
+
 df_assigned_two = df.assign(new_column=df["old_column"].apply(my_function))
+
 df_assigned_three = df.assign(
     weight_abs=lambda x: x["weight"]*x["abs"]
 )
+
 df_assigned_multiple = df.assign(factor_two=lambda x: x["factor"]*2,
                                  factor_four=lambda x: x["factor"]*4,
                                  factor_ten=lambda x: x["factor_two"]*5)
+
 df_flag = df.assign(column_flag=df["old_column"].isin(arr_values))
+
+df_assigned = df_assigned.assign(
+    tax_amount=df['price'] * 0.2,
+    total_price=lambda x: x['price'] * 1.2
+)
 
 # Numpy where
 df_where = df_where.assign(new_col=np.where(df["column_valid"], df["value_valid"], "value_not_valid"))
-```
-We can also include lambda functions as well
-```Python
-df_lambda["new_column] = df_lambda["existing_column"].apply(lambda x: my_function(x) if isinstance(x, str) else "")
+# Simple if-then-else
+df['status'] = np.where(df['score'] >= 60, 'Pass', 'Fail')
+
+# Multiple conditions
+df['grade'] = np.where(
+    df['score'] >= 90, 'A',
+    np.where(df['score'] >= 80, 'B',
+    np.where(df['score'] >= 70, 'C',
+    np.where(df['score'] >= 60, 'D', 'F')))
+)
+
+# Insert
+df.insert(position, 'column_name', values)
+
+# Insert a column at position 2
+df.insert(2, 'category', ['A', 'B', 'A', 'C', 'B'])
 ```
 
 
@@ -489,7 +535,7 @@ pd.date_range(start="2023-01-01", end="2023-12-31")
                 dtype='datetime64[ns]', length=365, freq='D')
 ```
 
-## Timelike data handling
+## Date and timestamp data
 
 ### Pandas Date & Timestamp Reference Guide
 
