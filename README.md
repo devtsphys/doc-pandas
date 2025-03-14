@@ -1,12 +1,17 @@
 # Code Reference for Pandas
+
 ## Install Packages
 ```Bash
 python -m pip install pandas
 ```
+
+
 ## Include Packages
 ```Python
 import pandas as pd
 ```
+
+
 ## Series
 A series is the basic one-dimensional data structure in pandas. The constainer consists of an axis label and a numpy array structure.
 
@@ -47,6 +52,8 @@ Additionally, a series can be created from a dictionary
 ```Python
 s3 = pd.Series({"b": 1, "a": 0, "c": 2})
 ```
+
+
 ### Attributes
 ```Python
 Series.index			# The index (axis labels) of the Series
@@ -56,6 +63,8 @@ Series.hasnans			# Return True if there are any NaNs
 Series.dtypes			# Return the dtype object of the underlying data
 Series.index			# The index (axis labels) of the Series
 ```
+
+
 ### Conversion
 ```Python
 Series.copy([deep])				# Make a copy of this object's indices and data
@@ -64,6 +73,8 @@ Series.to_period([freq, copy])			# Convert Series from DatetimeIndex to PeriodIn
 Series.to_timestamp([freq, how, copy])		# Cast to DatetimeIndex of Timestamps, at beginning of period
 Series.to_list()				# Return a list of the values
 ```
+
+
 ### Indexing, iteration
 ```Python
 Series.at					# Access a single value for a row/column label pair
@@ -71,6 +82,8 @@ Series.iat					# Access a single value for a row/column pair by integer position
 Series.loc					# Access a group of rows and columns by label(s) or a boolean array
 Series.iloc					# Purely integer-location based indexing for selection by position
 ```
+
+
 ### Reindexing, selection, label manipulation, missing data handling
 ```Python
 Series.head([n])					# Return the first n rows
@@ -86,6 +99,8 @@ Series.isnull()						# Series.isnull is an alias for Series.isna
 Series.notna()						# Detect existing (non-missing) values
 Series.notnull()					# Series.notnull is an alias for Series.notna
 ```
+
+
 ### Index and Values
 The index and values of a series can be extracted as follows
 ```Python
@@ -95,6 +110,8 @@ pd.Series([1, 2, 3]).index 			# RangeIndex(start=0, stop=3, step=1)
 pd.Series({"a": 1, "b": 2, "c": 5}).values	# array([1, 2, 5], dtype=int64)
 pd.Series([1, 2, 3]).values			# array([1, 2, 3], dtype=int64)
 ```
+
+
 ### Value extraction
 Values of a series can be extracted as follows
 ```Python
@@ -105,6 +122,8 @@ s5 = pd.Series({"a": 1, "b": -2.5})
 s5[0]	# 1.0
 s5["b"] # -2.5
 ```
+
+
 #### Examples
 ```Python
 s1 = pd.Series([1, 2, 3])
@@ -117,6 +136,8 @@ The output of a series looks as follows
 2    3
 dtype: int64
 ```
+
+
 ## Indexes
 An index is an immutable sequence used for indexing and alignment. 
 
@@ -129,6 +150,8 @@ class pandas.Index(data=None,		# array-like (1-dimensional)
                    tupleize_cols=True	# bool (default: True)
                   )
 ```
+
+
 ## Data Frame
 A data frame is the basic two-dimensional tabular data structure in pandas. The container consists of an index for rows and columns, respectively.
 
@@ -158,6 +181,8 @@ Furthermore, we can create data frames as follows
 d = {"column_1": [1, 2], "column_2": [3, 4]}
 df2 = pd.DataFrame(data=d)
 ```
+
+
 ### Attributes
 ```Python
 DataFrame.index			# The index (row labels) of the DataFrame
@@ -166,6 +191,8 @@ DataFrame.dtypes		# Return the dtypes in the DataFrame
 DataFrame.values		# Return a Numpy representation of the DataFrame
 DataFrame.shape			# Return a tuple representing the dimensionality of the DataFrame
 ```
+
+
 ### Indexing
 ```Python
 DataFrame.head([n])		# Return the first n rows
@@ -175,6 +202,8 @@ DataFrame.iat			# Access a single value for a row/column pair by integer positio
 DataFrame.loc			# Access a group of rows and columns by label(s) or a boolean array
 DataFrame.iloc			# Purely integer-location based indexing for selection by position
 ```
+
+
 ### General methods
 ```Python
 pivot(data, *, columns[, index, values])			# Return reshaped DataFrame organized by given index / column values
@@ -182,9 +211,13 @@ pivot_table(data[, values, index, columns, ...])		# Create a spreadsheet-style p
 merge(left, right[, how, on, left_on, ...])			# Merge DataFrame or named Series objects with a database-style join
 concat(objs, *[, axis, join, ignore_index, ...])		# Concatenate pandas objects along a particular axis
 ```
+
+
 ### Handle missing data
 ```Python
 ```
+
+
 ### Add columns
 We can add columns via
 ```Python
@@ -222,6 +255,8 @@ We can also include lambda functions as well
 ```Python
 df_lambda["new_column] = df_lambda["existing_column"].apply(lambda x: my_function(x) if isinstance(x, str) else "")
 ```
+
+
 ### Rename
 We can rename columns as follows
 ```Python
@@ -233,6 +268,8 @@ df.rename(columns={"factor": "weight_factor"})
 1	B	-2	9.24	2.0		-4.0
 2	C	3	-0.12	2.0		6.0
 ```
+
+
 ### Filter
 We can filter rows based on conditions as follows
 ```Python
