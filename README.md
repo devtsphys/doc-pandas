@@ -302,9 +302,6 @@ df.insert(position, 'column_name', values)
 df.insert(2, 'category', ['A', 'B', 'A', 'C', 'B'])
 ```
 
-
-## Pandas Column Reference Card
-
 ### Basic Column Creation
 
 ### Method 1: Direct Assignment
