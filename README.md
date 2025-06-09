@@ -303,6 +303,249 @@ df.insert(2, 'category', ['A', 'B', 'A', 'C', 'B'])
 ```
 
 
+## Pandas Column Reference Card
+
+### Basic Column Creation
+
+### Method 1: Direct Assignment
+```python
+# Create a new column by direct assignment
+df['new_column'] = value
+```
+
+**Examples:**
+```python
+# Add a constant value
+df['status'] = 'active'
+
+# Add a list/array (must match DataFrame length)
+df['scores'] = [98, 87, 92, 79, 85]
+
+# Add a column based on existing column
+df['price_usd'] = df['price_eur'] * 1.1
+```
+
+### Method 2: `assign()` Method
+```python
+# Create columns using assign() (returns a new DataFrame)
+df = df.assign(new_column=value)
+```
+
+**Examples:**
+```python
+# Add a single column
+df = df.assign(tax_rate=0.2)
+
+# Add multiple columns in one call
+df = df.assign(
+    tax_amount=df['price'] * 0.2,
+    total_price=lambda x: x['price'] * 1.2
+)
+```
+
+### Method 3: `insert()` Method
+```python
+# Insert a column at a specific position
+df.insert(position, 'column_name', values)
+```
+
+**Example:**
+```python
+# Insert a column at position 2
+df.insert(2, 'category', ['A', 'B', 'A', 'C', 'B'])
+```
+
+### Conditional Column Creation
+
+### Using `np.where()`
+```python
+import numpy as np
+
+# Simple if-then-else
+df['status'] = np.where(df['score'] >= 60, 'Pass', 'Fail')
+
+# Multiple conditions
+df['grade'] = np.where(
+    df['score'] >= 90, 'A',
+    np.where(df['score'] >= 80, 'B',
+    np.where(df['score'] >= 70, 'C',
+    np.where(df['score'] >= 60, 'D', 'F')))
+)
+```
+
+### Using `np.select()`
+```python
+# For multiple conditions
+conditions = [
+    df['score'] >= 90,
+    df['score'] >= 80,
+    df['score'] >= 70,
+    df['score'] >= 60
+]
+choices = ['A', 'B', 'C', 'D']
+df['grade'] = np.select(conditions, choices, default='F')
+```
+
+### Column Transformations
+
+### Applying Functions
+
+#### Method 1: Using Basic Operations
+```python
+# Simple math operations
+df['area'] = df['length'] * df['width']
+df['log_value'] = np.log(df['value'])
+```
+
+#### Method 2: Using `apply()`
+```python
+# Apply a function to each element
+df['title_case'] = df['name'].apply(lambda x: x.title())
+
+# Custom functions
+def calculate_bmi(row):
+    return row['weight'] / (row['height'] ** 2)
+
+df['bmi'] = df.apply(calculate_bmi, axis=1)
+```
+
+#### Method 3: Using `map()`
+```python
+# Map values using a dictionary
+status_map = {1: 'Active', 2: 'Pending', 3: 'Closed'}
+df['status_label'] = df['status_code'].map(status_map)
+```
+
+### Advanced Column Creation
+
+### Using `pd.eval()` and `query()`
+```python
+# Fast evaluation of complex expressions
+df = df.eval('total = price + tax')
+df = df.eval('discount = price * 0.1')
+df = df.eval('final_price = price - discount')
+```
+
+### String Operations with `str` Accessor
+```python
+# Create columns with string operations
+df['lowercase'] = df['text'].str.lower()
+df['first_letter'] = df['text'].str[0]
+df['extracted'] = df['text'].str.extract(r'(\d+)')
+df['contains_data'] = df['text'].str.contains('data', case=False)
+```
+
+### Date Operations with `dt` Accessor
+```python
+# Extract date components
+df['year'] = df['date'].dt.year
+df['month'] = df['date'].dt.month
+df['day_name'] = df['date'].dt.day_name()
+df['is_weekend'] = df['date'].dt.dayofweek >= 5
+```
+
+### Category Operations
+```python
+# Create categorical columns
+df['size'] = pd.Categorical(df['size_text'], 
+                           categories=['Small', 'Medium', 'Large'],
+                           ordered=True)
+                           
+# Create category-based columns
+df['size_code'] = df['size'].cat.codes
+```
+
+### Aggregation Results as New Columns
+```python
+# Add aggregated values as new columns
+df['price_diff_from_mean'] = df['price'] - df['price'].mean()
+df['price_percent_rank'] = df['price'].rank(pct=True)
+df['price_zscore'] = (df['price'] - df['price'].mean()) / df['price'].std()
+```
+
+### Multi-Column Operations
+
+### Creating Pivot Tables
+```python
+# Create pivot tables and join back to original DataFrame
+pivot_df = df.pivot_table(
+    index='customer_id',
+    values='purchase_amount',
+    columns='category',
+    aggfunc='sum',
+    fill_value=0
+)
+
+# Join pivot results back to original dataframe
+df = df.join(pivot_df, on='customer_id', rsuffix='_category')
+```
+
+### Column-wise Calculations
+```python
+# Calculate stats across multiple columns
+df['row_mean'] = df[['score1', 'score2', 'score3']].mean(axis=1)
+df['row_max'] = df[['score1', 'score2', 'score3']].max(axis=1)
+df['all_passed'] = (df[['exam1', 'exam2', 'exam3']] >= 60).all(axis=1)
+df['any_failed'] = (df[['exam1', 'exam2', 'exam3']] < 60).any(axis=1)
+```
+
+### Best Practices
+
+### Performance Optimization
+- Use vectorized operations instead of loops (`apply` is slower than vectorized operations)
+- Use `np.where` or `np.select` instead of complicated apply lambdas for conditionals
+- Consider `pd.eval()` for complex arithmetic (on large DataFrames)
+- Use `inplace=True` sparingly; it can lead to harder-to-maintain code
+- Consider assigning multiple columns at once rather than one by one
+
+### Memory Efficiency
+- Use appropriate data types (`category` for categorical data, etc.)
+- Use `pd.to_numeric()` with `downcast` parameter to optimize numeric columns
+- Consider chunking operations for very large DataFrames
+
+### Readability
+- Use descriptive column names
+- Chain methods with sensible line breaks for readability
+- Use `assign()` for multi-column creation to make code more readable
+
+### Error Prevention
+- Check for missing values before performing operations
+- Use `.loc[]` or `.iloc[]` for explicit selection
+- Add validation steps for important column creation
+
+### Code Samples
+
+#### Optimize Numeric Columns
+```python
+# Convert to optimal numeric datatypes
+df['value'] = pd.to_numeric(df['value'], errors='coerce', downcast='integer')
+```
+
+#### Create Multiple Columns Efficiently
+```python
+# Create several columns at once using assign
+df = df.assign(
+    full_name=lambda x: x['first_name'] + ' ' + x['last_name'],
+    age=lambda x: 2023 - x['birth_year'],
+    age_group=lambda x: pd.cut(2023 - x['birth_year'], 
+                               bins=[0, 18, 35, 50, 65, 100],
+                               labels=['<18', '18-34', '35-49', '50-64', '65+'])
+)
+```
+
+#### Create Columns Based on Window Functions
+```python
+# Creating columns with window functions
+df['rolling_avg'] = df.groupby('category')['value'].transform(
+    lambda x: x.rolling(window=3, min_periods=1).mean()
+)
+
+df['cumulative_sum'] = df.groupby('category')['value'].transform('cumsum')
+
+df['rank_in_group'] = df.groupby('category')['value'].transform('rank', method='dense')
+```
+
+
 ### Rename
 We can rename columns as follows
 ```Python
