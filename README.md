@@ -1,9 +1,17 @@
 # Code Reference for Pandas
 
 - [Installation](#install-packages)
+- [Include Package](#include-packages)
 - [Series](#series)
+  - [Attributes](#attributes)
+  - [Conversion](#conversion)
+  - [Indexing and Iteration](#indexing-iteration)
+  - [Reindexing, Selection, Missing Data Handling](#reindexing-selection-label-manipulation-missing-data-handling)
 - [Indexes](#indexes)
 - [DataFrames](#data-frame)
+  - [Attributes](#attributes-1)
+- [Input and Output](#input-and-output)
+- [General functions](#general-functions)
 - [Timelike data handling](#date-and-timestamp-data)
 
 ## Install Packages
