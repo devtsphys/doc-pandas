@@ -10,6 +10,7 @@
 - [Indexes](#indexes)
 - [DataFrames](#data-frame)
   - [Attributes](#attributes-1)
+- [GroupBy](#groupby)
 - [Input and Output](#input-and-output)
 - [General functions](#general-functions)
 - [Timelike data handling](#date-and-timestamp-data)
@@ -638,6 +639,358 @@ df_3
 0	2	b	d
 1	3	c	e
 ```
+
+## GroupBy
+
+### Basic GroupBy Syntax
+
+```python
+import pandas as pd
+
+# Basic groupby
+df.groupby('column_name')
+df.groupby(['col1', 'col2'])  # Multiple columns
+df.groupby(df['column'])      # Using Series
+df.groupby(lambda x: x % 2)   # Using function
+```
+
+### Sample Data Setup
+
+```python
+data = {
+    'Category': ['A', 'B', 'A', 'B', 'A', 'C'],
+    'Values': [10, 20, 30, 40, 50, 60],
+    'Scores': [1.1, 2.2, 3.3, 4.4, 5.5, 6.6],
+    'Region': ['North', 'South', 'North', 'South', 'East', 'West']
+}
+df = pd.DataFrame(data)
+```
+
+### Aggregation Methods
+
+### Single Aggregation Functions
+
+|Method      |Description              |Example                           |
+|------------|-------------------------|----------------------------------|
+|`.count()`  |Count non-null values    |`df.groupby('Category').count()`  |
+|`.sum()`    |Sum of values            |`df.groupby('Category').sum()`    |
+|`.mean()`   |Average of values        |`df.groupby('Category').mean()`   |
+|`.median()` |Median value             |`df.groupby('Category').median()` |
+|`.std()`    |Standard deviation       |`df.groupby('Category').std()`    |
+|`.var()`    |Variance                 |`df.groupby('Category').var()`    |
+|`.min()`    |Minimum value            |`df.groupby('Category').min()`    |
+|`.max()`    |Maximum value            |`df.groupby('Category').max()`    |
+|`.first()`  |First value              |`df.groupby('Category').first()`  |
+|`.last()`   |Last value               |`df.groupby('Category').last()`   |
+|`.size()`   |Group size (includes NaN)|`df.groupby('Category').size()`   |
+|`.nunique()`|Count unique values      |`df.groupby('Category').nunique()`|
+
+### Multiple Aggregations with .agg()
+
+```python
+# Multiple functions on all columns
+df.groupby('Category').agg(['sum', 'mean', 'count'])
+
+# Different functions for different columns
+df.groupby('Category').agg({
+    'Values': ['sum', 'mean'],
+    'Scores': ['min', 'max', 'std']
+})
+
+# Custom function names
+df.groupby('Category').agg({
+    'Values': [('total', 'sum'), ('average', 'mean')],
+    'Scores': [('minimum', 'min'), ('maximum', 'max')]
+})
+
+# Using lambda functions
+df.groupby('Category').agg({
+    'Values': lambda x: x.max() - x.min(),  # Range
+    'Scores': lambda x: x.quantile(0.75)    # 75th percentile
+})
+```
+
+### Statistical Aggregations
+
+|Method        |Description            |Example                               |
+|--------------|-----------------------|--------------------------------------|
+|`.quantile(q)`|Quantile values        |`df.groupby('Category').quantile(0.5)`|
+|`.describe()` |Summary statistics     |`df.groupby('Category').describe()`   |
+|`.skew()`     |Skewness               |`df.groupby('Category').skew()`       |
+|`.kurt()`     |Kurtosis               |`df.groupby('Category').kurt()`       |
+|`.sem()`      |Standard error of mean |`df.groupby('Category').sem()`        |
+|`.mad()`      |Mean absolute deviation|`df.groupby('Category').mad()`        |
+
+### Advanced Techniques
+
+### Custom Aggregation Functions
+
+```python
+# Custom function
+def range_func(x):
+    return x.max() - x.min()
+
+def coefficient_variation(x):
+    return x.std() / x.mean()
+
+# Apply custom functions
+df.groupby('Category').agg({
+    'Values': [range_func, coefficient_variation],
+    'Scores': ['mean', lambda x: x.median()]
+})
+```
+
+### Named Aggregations (pandas >= 0.25.0)
+
+```python
+df.groupby('Category').agg(
+    total_values=('Values', 'sum'),
+    avg_scores=('Scores', 'mean'),
+    count_records=('Values', 'count'),
+    value_range=('Values', lambda x: x.max() - x.min())
+)
+```
+
+### Conditional Aggregation
+
+```python
+# Aggregation with conditions
+df.groupby('Category').apply(
+    lambda x: x[x['Values'] > 20]['Scores'].mean()
+)
+
+# Using query within groups
+df.groupby('Category').apply(
+    lambda x: x.query('Values > @x.Values.median()')['Scores'].sum()
+)
+```
+
+### Multi-level Operations
+
+### Multiple Grouping Columns
+
+```python
+# Multi-level grouping
+df.groupby(['Category', 'Region']).sum()
+
+# Access specific level
+df.groupby(['Category', 'Region']).sum().loc['A']
+
+# Unstack for pivot-like view
+df.groupby(['Category', 'Region']).sum().unstack('Region')
+```
+
+### GroupBy with MultiIndex
+
+```python
+# Create MultiIndex result
+result = df.groupby(['Category', 'Region']).agg({
+    'Values': ['sum', 'mean'],
+    'Scores': 'max'
+})
+
+# Flatten MultiIndex columns
+result.columns = ['_'.join(col).strip() for col in result.columns.values]
+```
+
+### Rolling and Expanding Windows
+
+```python
+# Rolling aggregation within groups
+df.groupby('Category')['Values'].rolling(window=2).mean()
+
+# Expanding aggregation within groups
+df.groupby('Category')['Values'].expanding().sum()
+
+# Cumulative operations
+df.groupby('Category')['Values'].cumsum()
+df.groupby('Category')['Values'].cummax()
+df.groupby('Category')['Values'].cumprod()
+```
+
+### Transformation & Filtering
+
+### Transform Operations
+
+```python
+# Standardize within groups
+df['Values_standardized'] = df.groupby('Category')['Values'].transform(
+    lambda x: (x - x.mean()) / x.std()
+)
+
+# Rank within groups
+df['Values_rank'] = df.groupby('Category')['Values'].rank()
+
+# Fill missing values with group mean
+df['Values_filled'] = df.groupby('Category')['Values'].transform('mean')
+
+# Percentage of group total
+df['Values_pct'] = df.groupby('Category')['Values'].transform(
+    lambda x: x / x.sum() * 100
+)
+```
+
+### Filter Groups
+
+```python
+# Filter groups by condition
+df.groupby('Category').filter(lambda x: len(x) > 1)
+
+# Filter by aggregate condition
+df.groupby('Category').filter(lambda x: x['Values'].sum() > 50)
+
+# Filter by multiple conditions
+df.groupby('Category').filter(
+    lambda x: (x['Values'].mean() > 20) & (len(x) >= 2)
+)
+```
+
+### Apply Custom Functions
+
+```python
+# Apply function to each group
+def process_group(group):
+    group['normalized'] = (group['Values'] - group['Values'].min()) / (group['Values'].max() - group['Values'].min())
+    return group
+
+df.groupby('Category').apply(process_group)
+
+# Apply with additional arguments
+df.groupby('Category').apply(lambda x, n: x.head(n), n=2)
+```
+
+### Specialized GroupBy Operations
+
+### Resampling with GroupBy (Time Series)
+
+```python
+# Assuming df has datetime index
+df.groupby('Category').resample('M').sum()  # Monthly aggregation by category
+df.groupby(['Category', pd.Grouper(freq='D')]).mean()  # Daily by category
+```
+
+### GroupBy with Categorical Data
+
+```python
+# Preserve category order
+df['Category'] = df['Category'].astype('category')
+df.groupby('Category', observed=False).sum()  # Include empty categories
+df.groupby('Category', observed=True).sum()   # Exclude empty categories
+```
+
+### Grouped Plotting
+
+```python
+# Plot by groups
+df.groupby('Category')['Values'].plot(kind='hist', alpha=0.7)
+df.groupby('Category').plot(x='Values', y='Scores', kind='scatter')
+```
+
+### Performance Tips
+
+### Optimization Techniques
+
+```python
+# Use categorical for repetitive string grouping
+df['Category'] = df['Category'].astype('category')
+
+# Sort before groupby for better performance
+df.sort_values('Category').groupby('Category').sum()
+
+# Use observed=True for categorical data
+df.groupby('Category', observed=True).sum()
+
+# Avoid apply when possible - use built-in functions
+# Slower:
+df.groupby('Category').apply(lambda x: x['Values'].sum())
+# Faster:
+df.groupby('Category')['Values'].sum()
+```
+
+### Memory Efficient Operations
+
+```python
+# Process large datasets in chunks
+for name, group in df.groupby('Category'):
+    # Process each group separately
+    result = group.sum()
+    # Save or process result
+```
+
+### Common Patterns & Examples
+
+### Business Intelligence Examples
+
+```python
+# Sales analysis
+sales_summary = df.groupby(['Region', 'Category']).agg({
+    'Values': ['sum', 'count'],
+    'Scores': 'mean'
+}).round(2)
+
+# Cohort analysis
+df.groupby(['Category', df.index.month]).agg({
+    'Values': ['sum', 'count', 'mean'],
+    'Scores': ['min', 'max']
+})
+
+# Ranking within groups
+df['rank'] = df.groupby('Category')['Values'].rank(method='dense', ascending=False)
+
+# Moving averages
+df['ma_3'] = df.groupby('Category')['Values'].rolling(3).mean()
+```
+
+### Data Quality Checks
+
+```python
+# Check for duplicates within groups
+duplicates = df.groupby(['Category', 'Region']).filter(lambda x: len(x) > 1)
+
+# Find outliers within groups (using IQR method)
+def find_outliers(group):
+    Q1 = group['Values'].quantile(0.25)
+    Q3 = group['Values'].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    return group[(group['Values'] < lower_bound) | (group['Values'] > upper_bound)]
+
+outliers = df.groupby('Category').apply(find_outliers)
+```
+
+### Advanced Aggregation Patterns
+
+```python
+# Weighted average within groups
+def weighted_avg(group, values_col, weights_col):
+    return (group[values_col] * group[weights_col]).sum() / group[weights_col].sum()
+
+df.groupby('Category').apply(weighted_avg, 'Scores', 'Values')
+
+# Conditional counts
+df.groupby('Category').apply(lambda x: (x['Values'] > x['Values'].median()).sum())
+
+# Group-wise correlations
+df.groupby('Category')[['Values', 'Scores']].corr()
+```
+
+#### Quick Reference Commands
+
+```python
+# Most common operations
+df.groupby('col').sum()                    # Sum by group
+df.groupby('col').agg(['mean', 'std'])     # Multiple aggregations
+df.groupby('col').size()                   # Group sizes
+df.groupby('col').get_group('A')          # Get specific group
+df.groupby('col').transform('mean')        # Transform with group mean
+df.groupby('col').filter(lambda x: len(x) > 2)  # Filter groups
+df.groupby('col').apply(custom_func)       # Apply custom function
+```
+
+
+
+
 ## Input and Output
 ### Pickling
 ```Python
