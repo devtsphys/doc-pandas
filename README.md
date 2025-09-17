@@ -11,6 +11,7 @@
 - [DataFrames](#data-frame)
   - [Attributes](#attributes-1)
 - [GroupBy](#groupby)
+- [Aggregation](#aggregation)
 - [Input and Output](#input-and-output)
 - [General functions](#general-functions)
 - [Timelike data handling](#date-and-timestamp-data)
@@ -989,6 +990,375 @@ df.groupby('col').apply(custom_func)       # Apply custom function
 ```
 
 
+## Aggregation
+
+The `.agg()` method (short for aggregate) is used to apply one or more aggregation functions to pandas DataFrames and Series. It’s highly flexible and supports multiple aggregation strategies.
+
+### Basic Syntax
+
+```python
+# DataFrame
+df.agg(func, axis=0, *args, **kwargs)
+
+# Series
+series.agg(func, *args, **kwargs)
+
+# GroupBy
+df.groupby('column').agg(func)
+```
+
+### Built-in Aggregation Functions
+
+### Statistical Functions
+
+|Function    |Description           |Example                   |
+|------------|----------------------|--------------------------|
+|`sum()`     |Sum of values         |`df.agg('sum')`           |
+|`mean()`    |Average/mean          |`df.agg('mean')`          |
+|`median()`  |Median value          |`df.agg('median')`        |
+|`mode()`    |Most frequent value   |`df.agg('mode')`          |
+|`std()`     |Standard deviation    |`df.agg('std')`           |
+|`var()`     |Variance              |`df.agg('var')`           |
+|`sem()`     |Standard error of mean|`df.agg('sem')`           |
+|`skew()`    |Skewness              |`df.agg('skew')`          |
+|`kurt()`    |Kurtosis              |`df.agg('kurt')`          |
+|`quantile()`|Quantile values       |`df.agg('quantile', 0.25)`|
+
+### Count and Frequency Functions
+
+|Function        |Description          |Example                     |
+|----------------|---------------------|----------------------------|
+|`count()`       |Non-null values count|`df.agg('count')`           |
+|`size()`        |Total elements count |`df.agg('size')`            |
+|`nunique()`     |Unique values count  |`df.agg('nunique')`         |
+|`value_counts()`|Value frequency      |`series.agg('value_counts')`|
+
+### Min/Max Functions
+
+|Function  |Description     |Example           |
+|----------|----------------|------------------|
+|`min()`   |Minimum value   |`df.agg('min')`   |
+|`max()`   |Maximum value   |`df.agg('max')`   |
+|`idxmin()`|Index of minimum|`df.agg('idxmin')`|
+|`idxmax()`|Index of maximum|`df.agg('idxmax')`|
+
+### First/Last Functions
+
+|Function |Description         |Example           |
+|---------|--------------------|------------------|
+|`first()`|First non-null value|`df.agg('first')` |
+|`last()` |Last non-null value |`df.agg('last')`  |
+|`nth()`  |nth non-null value  |`df.agg('nth', 2)`|
+
+### Multiple Aggregation Methods
+
+### 1. Multiple Functions on All Columns
+
+```python
+import pandas as pd
+import numpy as np
+
+# Sample data
+df = pd.DataFrame({
+    'A': [1, 2, 3, 4, 5],
+    'B': [10, 20, 30, 40, 50],
+    'C': [100, 200, 300, 400, 500]
+})
+
+# Multiple functions
+result = df.agg(['sum', 'mean', 'std'])
+print(result)
+```
+
+### 2. Different Functions for Different Columns
+
+```python
+# Dictionary mapping columns to functions
+result = df.agg({
+    'A': 'sum',
+    'B': ['mean', 'std'],
+    'C': ['min', 'max', 'count']
+})
+print(result)
+```
+
+### 3. Custom Function Names
+
+```python
+# Renaming aggregated columns
+result = df.agg({
+    'A': ['sum', 'mean'],
+    'B': ['min', 'max']
+}).round(2)
+
+# Flatten column names
+result.columns = ['_'.join(col).strip() for col in result.columns]
+print(result)
+```
+
+### Advanced Techniques
+
+### 1. Custom Aggregation Functions
+
+```python
+# Define custom functions
+def range_calc(x):
+    return x.max() - x.min()
+
+def custom_stats(x):
+    return pd.Series({
+        'range': x.max() - x.min(),
+        'iqr': x.quantile(0.75) - x.quantile(0.25),
+        'cv': x.std() / x.mean() if x.mean() != 0 else 0
+    })
+
+# Apply custom functions
+result = df.agg({
+    'A': [range_calc, 'mean'],
+    'B': custom_stats,
+    'C': lambda x: x.sum() / x.count()
+})
+```
+
+### 2. Lambda Functions
+
+```python
+# Using lambda functions
+result = df.agg({
+    'A': lambda x: x.sum() / len(x),
+    'B': lambda x: x.max() - x.min(),
+    'C': lambda x: x.std() / x.mean()
+})
+```
+
+### 3. Named Aggregations (pandas 0.25+)
+
+```python
+# More readable aggregations
+result = df.agg(
+    total_A=pd.NamedAgg(column='A', aggfunc='sum'),
+    avg_B=pd.NamedAgg(column='B', aggfunc='mean'),
+    range_C=pd.NamedAgg(column='C', aggfunc=lambda x: x.max() - x.min())
+)
+```
+
+### GroupBy with .agg()
+
+### Basic GroupBy Aggregation
+
+```python
+# Sample grouped data
+df_grouped = pd.DataFrame({
+    'Category': ['A', 'A', 'B', 'B', 'C', 'C'],
+    'Value1': [10, 20, 30, 40, 50, 60],
+    'Value2': [1, 2, 3, 4, 5, 6]
+})
+
+# Group and aggregate
+result = df_grouped.groupby('Category').agg({
+    'Value1': ['sum', 'mean'],
+    'Value2': ['min', 'max']
+})
+```
+
+### Multiple GroupBy Columns
+
+```python
+# Multiple grouping columns
+df_multi = pd.DataFrame({
+    'Category': ['A', 'A', 'B', 'B'] * 2,
+    'Type': ['X', 'Y'] * 4,
+    'Value': [10, 20, 30, 40, 50, 60, 70, 80]
+})
+
+result = df_multi.groupby(['Category', 'Type']).agg({
+    'Value': ['sum', 'count', 'mean']
+})
+```
+
+### Axis Parameter
+
+### Axis=0 (Default) - Column-wise Aggregation
+
+```python
+# Aggregate along rows (column-wise)
+result = df.agg('sum', axis=0)  # Sum each column
+```
+
+### Axis=1 - Row-wise Aggregation
+
+```python
+# Aggregate along columns (row-wise)
+result = df.agg('sum', axis=1)  # Sum each row
+```
+
+### Common Patterns and Examples
+
+### 1. Financial Data Analysis
+
+```python
+# Stock price analysis
+stock_data = pd.DataFrame({
+    'Open': [100, 102, 101, 103, 99],
+    'High': [105, 106, 104, 108, 102],
+    'Low': [98, 100, 99, 101, 97],
+    'Close': [104, 103, 102, 105, 101],
+    'Volume': [1000, 1200, 800, 1500, 900]
+})
+
+daily_stats = stock_data.agg({
+    'Open': 'first',
+    'High': 'max',
+    'Low': 'min', 
+    'Close': 'last',
+    'Volume': 'sum'
+})
+```
+
+### 2. Sales Data Analysis
+
+```python
+sales_data = pd.DataFrame({
+    'Region': ['North', 'South', 'North', 'South', 'East'],
+    'Sales': [1000, 1500, 1200, 1800, 900],
+    'Profit': [100, 200, 150, 250, 80]
+})
+
+regional_summary = sales_data.groupby('Region').agg({
+    'Sales': ['sum', 'mean', 'count'],
+    'Profit': ['sum', 'mean'],
+    'Region': 'count'  # Count of records per region
+}).round(2)
+```
+
+### 3. Time Series Aggregation
+
+```python
+# Time-based aggregation
+dates = pd.date_range('2023-01-01', periods=10, freq='D')
+ts_data = pd.DataFrame({
+    'Date': dates,
+    'Value': np.random.randn(10).cumsum()
+})
+
+ts_data.set_index('Date', inplace=True)
+
+# Monthly aggregation
+monthly_stats = ts_data.resample('M').agg({
+    'Value': ['mean', 'std', 'min', 'max']
+})
+```
+
+### Performance Tips
+
+### 1. Use Built-in Functions When Possible
+
+```python
+# Faster
+df.agg('sum')
+
+# Slower
+df.agg(lambda x: x.sum())
+```
+
+### 2. Vectorized Operations
+
+```python
+# For simple calculations, direct operations can be faster
+df.sum()  # Instead of df.agg('sum')
+df.mean()  # Instead of df.agg('mean')
+```
+
+### 3. Efficient GroupBy
+
+```python
+# Use .agg() with dictionary for multiple operations
+# More efficient than multiple separate operations
+grouped = df.groupby('category')
+result = grouped.agg({
+    'value': ['sum', 'mean', 'count']
+})
+
+# Instead of:
+# sum_result = grouped['value'].sum()
+# mean_result = grouped['value'].mean()
+# count_result = grouped['value'].count()
+```
+
+### Error Handling and Edge Cases
+
+### 1. Handling Missing Values
+
+```python
+# NaN handling in aggregations
+df_with_nan = pd.DataFrame({
+    'A': [1, 2, np.nan, 4],
+    'B': [np.nan, 2, 3, 4]
+})
+
+# Most functions ignore NaN by default
+result = df_with_nan.agg(['sum', 'count', 'mean'])
+
+# To include NaN in count:
+result_with_nan = df_with_nan.agg(['size'])  # size includes NaN
+```
+
+### 2. Empty DataFrame Handling
+
+```python
+# Empty DataFrame
+empty_df = pd.DataFrame(columns=['A', 'B'])
+
+try:
+    result = empty_df.agg('sum')
+    print(result)  # Returns Series with 0.0 for numeric columns
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+### 3. Mixed Data Types
+
+```python
+# Mixed data types
+mixed_df = pd.DataFrame({
+    'Numbers': [1, 2, 3],
+    'Strings': ['a', 'b', 'c'],
+    'Dates': pd.date_range('2023-01-01', periods=3)
+})
+
+# Only numeric columns for numerical aggregations
+numeric_result = mixed_df.select_dtypes(include=[np.number]).agg('sum')
+
+# Type-appropriate aggregations
+type_specific = mixed_df.agg({
+    'Numbers': 'sum',
+    'Strings': lambda x: ', '.join(x),
+    'Dates': ['min', 'max']
+})
+```
+
+### Quick Reference Cheat Sheet
+
+|Use Case                       |Syntax                               |Example                                |
+|-------------------------------|-------------------------------------|---------------------------------------|
+|Single function, all columns   |`df.agg('function')`                 |`df.agg('sum')`                        |
+|Multiple functions, all columns|`df.agg(['func1', 'func2'])`         |`df.agg(['sum', 'mean'])`              |
+|Different functions per column |`df.agg({'col': 'func'})`            |`df.agg({'A': 'sum', 'B': 'mean'})`    |
+|Multiple functions per column  |`df.agg({'col': ['func1', 'func2']})`|`df.agg({'A': ['sum', 'count']})`      |
+|Custom function                |`df.agg(custom_func)`                |`df.agg(lambda x: x.max() - x.min())`  |
+|Named aggregations             |`pd.NamedAgg()`                      |`df.agg(total=pd.NamedAgg('A', 'sum'))`|
+|GroupBy aggregation            |`df.groupby('col').agg()`            |`df.groupby('cat').agg('sum')`         |
+|Row-wise aggregation           |`df.agg('func', axis=1)`             |`df.agg('sum', axis=1)`                |
+
+#### Best Practices
+
+1. **Use meaningful names** for custom aggregations
+1. **Chain operations efficiently** to avoid intermediate DataFrames
+1. **Consider memory usage** with large datasets
+1. **Validate results** especially with custom functions
+1. **Document complex aggregations** for team collaboration
+1. **Test edge cases** like empty DataFrames or all-NaN columns
+1. **Use appropriate data types** for better performance
 
 
 ## Input and Output
